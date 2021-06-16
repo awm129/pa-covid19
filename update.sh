@@ -33,25 +33,35 @@ function get_pdf()
 	#
 
 	local dates=(
-		"${1}"				# date mm-dd-yyyy
-		"${1##0}"				# no leading 0 in month
-		"${1/-0/-}"			# no leading 0 in day
+		"${1}"						# date mm-dd-yyyy
+		"${1##0}"					# no leading 0 in month
+		"${1/-0/-}"					# no leading 0 in day
 	)
 
 	dates+=(
-		"${dates[1]/-0/-}"	# no leading 0 in month or day
+		"${dates[1]/-0/-}"			# no leading 0 in month or day
 	)
 
 	dates+=(
-		"${dates[0]//-/_}"	# date mm_dd_yyyy
-		"${dates[1]//-/_}"	# no leading 0 in month w/ underscores
-		"${dates[2]//-/_}"	# no leading 0 in day w/ underscores
-		"${dates[3]//-/_}"	# no leading 0s w/ underscores
-		"${dates[0]//-/ }"	# date mm dd yyyy
-		"${dates[1]//-/ }"	# no leading 0 in month w/ spaces
-		"${dates[2]//-/ }"	# no leading 0 in day w/ spaces
-		"${dates[3]//-/ }"	# no leading 0s w/ spaces
+		"${dates[0]/%2021/21}"		# 2 digit year
+		"${dates[1]/%2021/21}"
+		"${dates[2]/%2021/21}"
+		"${dates[3]/%2021/21}"
 	)
+
+	seperators=('_' ' ' '.')
+	for s in "${seperators[@]}"; do
+		dates+=(
+			"${dates[0]//-/$s}"		# date mm<$s>dd<$s>yyyy
+			"${dates[1]//-/$s}"		# no leading 0 in month w/ seperator
+			"${dates[2]//-/$s}"		# no leading 0 in day w/ seperator
+			"${dates[3]//-/$s}"		# no leading 0s w/ seperator
+			"${dates[4]//-/$s}"		# date mm<$s>dd<$s>yy
+			"${dates[5]//-/$s}"		# no leading 0 in month w/ seperator, 2 digit year
+			"${dates[6]//-/$s}"		# no leading 0 in day w/ seperator, 2 digit year
+			"${dates[7]//-/$s}"		# no leading 0s w/ seperator, 2 digit year
+		)
+	done
 
 	local filename=""
 
@@ -75,8 +85,8 @@ function get_pdf()
 			if [[ $(date +"%m-%d-%Y") == "$1" ]]; then
 				echo "waiting on $1..."
 				notify=1
-			elif [[ $(date -d"${1//-/\/}" +%w) -eq 0 ]]; then
-				echo "waiting for Sunday ($1) results..."
+			elif [[ $(date -d"yesterday" +"%m-%d-%y") == "$1" ]] && [[ $WAIT -eq 1 ]]; then
+				echo "waiting for yesterday's results ($1)..."
 				notify=1
 			else
 				echo "couldn't find $1"
@@ -164,6 +174,7 @@ function update_covid19()
 VERBOSE=0
 RECURSIVE=0
 HEADER=0
+WAIT=0
 
 function usage()
 {
@@ -171,6 +182,7 @@ function usage()
 	echo "	-r		fetch data recursively from the given date until today"
 	echo "	-v		verbose logging"
 	echo "	-h		print column headers"
+	echo "  -w		wait for yesterday's results"
 }
 
 opts='rvh'
@@ -180,6 +192,7 @@ do
 		r) RECURSIVE=1;;
 		v) VERBOSE=1;;
 		h) HEADER=1;;
+		w) WAIT=1;;
 		?) usage; exit;;
 		:) echo "Unknown option: -$OPTARG" >&2; exit 1;;
 	esac
