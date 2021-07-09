@@ -1,5 +1,7 @@
 #!/bin/bash
 
+last_missing=""
+
 function get_pdf()
 {
 	local localfile="$1".pdf
@@ -10,6 +12,11 @@ function get_pdf()
 		else
 			return 0
 		fi
+	fi
+
+	if [[ $1 == $last_missing ]]; then
+		# skip known missing files
+		return 1
 	fi
 	
 	local notify=0
@@ -90,6 +97,7 @@ function get_pdf()
 				notify=1
 			else
 				echo "couldn't find $1"
+				last_missing=$1
 				return 1
 			fi
 		fi
