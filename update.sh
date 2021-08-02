@@ -114,15 +114,20 @@ function get_pdf()
 
 function split_line()
 {
+	#
+	# strip leading text from digits
+	#
+	local line=$(echo "$1" | sed 's/^[^[:digit:]]*//')
+
 	local -n cases=$2
 	local -n confirmed=$3
 	local -n probable=$4
 	local -n negative=$5
 
-	cases=$(echo "$1" | awk '{print $3}')
-	confirmed=$(echo "$1" | awk '{print $4}')
-	probable=$(echo "$1" | awk '{print $5}')
-	negative=$(echo "$1" | awk '{print $6}')
+	cases=$(echo "$line" | awk '{print $1}')
+	confirmed=$(echo "$line" | awk '{print $2}')
+	probable=$(echo "$line" | awk '{print $3}')
+	negative=$(echo "$line" | awk '{print $4}')
 
 	#
 	# strip any commas from the numbers
